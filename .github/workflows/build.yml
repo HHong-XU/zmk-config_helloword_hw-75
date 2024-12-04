@@ -32,7 +32,7 @@ jobs:
           apt-get install -y python3-pip protobuf-compiler curl
           curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
           apt-get install -y nodejs
-          pip install -U fonttools
+          pip install -U fonttools --break-system-packages
           npm install -g lv_font_conv
 
       - name: Cache west modules
@@ -56,7 +56,7 @@ jobs:
           west init -l config
           west update
           west zephyr-export
-          pip install -r zephyr/scripts/requirements.txt
+          pip install -r zephyr/scripts/requirements.txt --break-system-packages
           git config --global --add safe.directory $PWD
 
       - name: West build
@@ -79,10 +79,13 @@ jobs:
           cp build/zephyr/zmk.bin "build/artifacts/${{ matrix.board }}-zmk.bin"
 
       - name: Archive
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: firmware-${{ matrix.board }}-${{ github.run_id }}
           path: build/artifacts
+
+      - name: Debug github.ref
+        run: echo "GitHub Ref:${{ github.ref }}"
 
   release:
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
@@ -95,7 +98,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: firmware
           path: firmware
